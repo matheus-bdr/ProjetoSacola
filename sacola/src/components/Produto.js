@@ -3,14 +3,9 @@ import '../style/Produto.css';
 import Axios from "axios";
 
 function Produto() {
-    const [values, setValues] = useState({ codigo: '', nome: '', id: null });
-    const [image, setImage] = useState(null);
+    const [values, setValues] = useState({ codigo: '', nome: '', quantidade: '', preco: '', id: null });
     const [produtos, setProdutos] = useState([]);
     const [botaoText, setBotaoText] = useState("Cadastrar Produto");
-    const fileNameDisplay = document.getElementById('file-name');
-    const productImageInput = document.getElementById('product-image');
-
-    console.log(values);
 
     const changeValues = (value) => {
         setValues(prevValue => ({
@@ -19,145 +14,163 @@ function Produto() {
         }))
     };
 
-    const changeImagem = () => {
-        setImage(productImageInput.files[0]);
-        const fileName = productImageInput.files[0]?.name || 'Nenhum arquivo selecionado';
-        fileNameDisplay.textContent = fileName;
-    }
-
-    const uploadBtnClick = () => {
-        productImageInput.click();
-    }
-
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if(!!!values.id){
+        if (!values.nome || !values.codigo || values.quantidade === '' || values.preco === '') {
+            alert('Preencha todos os campos.');
+            return;
+        }
+
+        if (!values.id) {
             try {
-                await Axios.get('http://localhost:3001/api/produto', {
+                const response = await Axios.get('http://localhost:3001/api/produto', {
                     params: { codigo: values.codigo }
-                }).then(response => {
-                    if (response.data.itens.length > 0) {
-                        alert('O Produto já existe no nosso banco de dados.');
-                        return;
-                    } else {
-                        Axios.post("http://localhost:3001/api/produto", {
-                            nome:values.nome,
-                            codigo:values.codigo,
-                            preco: 20,
-                            quantidade_disponivel: 10
-                        }).then(response => {
-                            window.location.reload();
-            
-                        }).catch(error => {
-                        console.error('Erro ao verificar produto', error);
-                        });
-                    }
-                }).catch(error => {
-                    console.error('Erro ao verificar produto', error);
                 });
+
+                if (response.data.itens.length > 0) {
+                    alert('O Produto já existe no nosso banco de dados.');
+                    return;
+                } else {
+                    await Axios.post("http://localhost:3001/api/produto", {
+                        nome: values.nome,
+                        codigo: values.codigo,
+                        preco: parseFloat(values.preco) || 0,
+                        quantidade_disponivel: parseInt(values.quantidade) || 0
+                    });
+
+                    window.location.reload();
+                }
             } catch (error) {
                 console.error('Erro no cadastro de produto:', error);
+                alert('Erro ao cadastrar produto.');
             }
         } else {
-            Axios.patch(`http://localhost:3001/api/produto/${values.id}`, {
-                nome:values.nome,
-                codigo:values.codigo,
-                preco: 20,
-                quantidade_disponivel: 10
-            }).then((response) => {
-                console.log(response);
-            }).catch((error) => {
+            try {
+                await Axios.patch(`http://localhost:3001/api/produto/${values.id}`, {
+                    nome: values.nome,
+                    codigo: values.codigo,
+                    preco: parseFloat(values.preco) || 0,
+                    quantidade_disponivel: parseInt(values.quantidade) || 0
+                });
+
+                window.location.reload();
+            } catch (error) {
                 console.error('Houve um erro ao atualizar o produto', error);
                 alert('Erro ao atualizar produto.');
-                return;
-            });
+            }
         }
-        window.location.reload();
-
-    }
+    };
 
     const handleDelete = (id) => {
-        Axios.delete(`http://localhost:3001/api/produto/${id}`).then((response) => {
-            console.log(response);
-            alert('Produto excluido com sucesso.');
+        Axios.delete(`http://localhost:3001/api/produto/${id}`).then(() => {
+            alert('Produto excluído com sucesso.');
+            window.location.reload();
         }).catch((error) => {
             console.error('Erro ao excluir o produto:', error);
             alert('Erro ao excluir o produto.');
         });
-        window.location.reload();
-    }
-
-    const imageUrl = (url) => {
-        return "http://localhost:3001/images/" + url;
-    }
+    };
 
     const handleEdit = (id) => {
-        const client = produtos.find(obj => obj.id === id)
-        
-        setValues({ codigo: client.codigo, nome: client.nome, id: client.id })
-        document.getElementById('product-name').value = client.nome
-        document.getElementById('product-code').value = client.codigo
-        setBotaoText("Editar Produto")
-        console.log(values)
-    }
+        const produtoSelecionado = produtos.find(obj => obj.id === id);
+
+        setValues({
+            codigo: produtoSelecionado.codigo,
+            nome: produtoSelecionado.nome,
+            quantidade: produtoSelecionado.quantidade_disponivel,
+            preco: produtoSelecionado.preco,
+            id: produtoSelecionado.id
+        });
+
+        document.getElementById('product-name').value = produtoSelecionado.nome;
+        document.getElementById('product-code').value = produtoSelecionado.codigo;
+        document.getElementById('product-quantidade').value = produtoSelecionado.quantidade_disponivel;
+        document.getElementById('product-preco').value = produtoSelecionado.preco;
+
+        setBotaoText("Editar Produto");
+    };
 
     useEffect(() => {
-        Axios.get('http://localhost:3001/api/produto', {timeout: 5000})
+        Axios.get('http://localhost:3001/api/produto', { timeout: 5000 })
             .then(response => {
                 setProdutos(response.data.itens);
             })
             .catch(error => {
-                alert('API não está disponível')
+                alert('API não está disponível');
                 console.error('Erro ao buscar dados:', error);
             });
     }, []);
 
     return (
-        <div class="container">
-            <div class="form-container">
-            <div class="nav-bar">
-                    <a href="/" >Cliente</a>
+        <div className="container">
+            <div className="form-container">
+                <div className="nav-bar">
+                    <a href="/">Cliente</a>
                     <span>|</span>
-                    <a href="/produto" class="active">Produto</a>
+                    <a href="/produto" className="active">Produto</a>
                 </div>
 
                 <h2>Cadastro de Produto</h2>
                 <form id="product-form" onSubmit={handleSubmit}>
-                    <label for="product-name">Nome do Produto</label>
+                    <label htmlFor="product-name">Nome do Produto</label>
                     <input
                         type="text"
                         id="product-name"
                         name="nome"
                         onChange={changeValues}
-                        required />
+                        required
+                    />
 
-                    <label for="product-code">Código do Produto</label>
+                    <label htmlFor="product-code">Código do Produto</label>
                     <input
                         type="text"
                         id="product-code"
                         name="codigo"
                         onChange={changeValues}
-                        required />
-                    <button type="submit" style={{marginBottom: '20px'}}>{botaoText}</button>
-                    {values.id && <button onClick={() => window.location.reload()} class="delete-btn">Cancelar</button>}
+                        required
+                    />
+
+                    <label htmlFor="product-quantidade">Quantidade do Produto</label>
+                    <input
+                        type="number"
+                        id="product-quantidade"
+                        name="quantidade"
+                        min="0"
+                        onChange={changeValues}
+                        required
+                    />
+
+                    <label htmlFor="product-preco">Preço do Produto (R$)</label>
+                    <input
+                        type="number"
+                        id="product-preco"
+                        name="preco"
+                        step="0.01"
+                        min="0"
+                        onChange={changeValues}
+                        required
+                    />
+
+                    <button type="submit" style={{ marginBottom: '20px' }}>{botaoText}</button>
+                    {values.id && <button type="button" onClick={() => window.location.reload()} className="delete-btn">Cancelar</button>}
                 </form>
             </div>
 
-            <div class="product-list-container">
+            <div className="product-list-container">
                 <h3>Produtos Cadastrados</h3>
-                <ul id="product-list" class="product-list">
+                <ul id="product-list" className="product-list">
                     {produtos.map(item => (
-                        <li key={item.id} class="product-item">
-                            <div class="product-info">
-                                <strong>Nome: </strong>
-                                {item.nome}
-                                <br />
-                                <strong>Codigo: </strong>
-                                {item.codigo}
+                        <li key={item.id} className="product-item">
+                            <div className="product-info">
+                                <strong>Nome: </strong>{item.nome}<br />
+                                <strong>Código: </strong>{item.codigo}<br />
+                                <strong>Quantidade: </strong>{item.quantidade_disponivel}<br />
+                                <strong>Preço Unitário: </strong>R$ {Number(item.preco).toFixed(2)}<br />
+                                <strong>Valor Total em Estoque: </strong>R$ {(item.preco * item.quantidade_disponivel).toFixed(2)}
                             </div>
-                            <button onClick={() => handleEdit(item.id)} class="edit-btn">Editar</button>
-                            <button onClick={() => handleDelete(item.id)} class="delete-btn">Excluir</button>
+                            <button onClick={() => handleEdit(item.id)} className="edit-btn">Editar</button>
+                            <button onClick={() => handleDelete(item.id)} className="delete-btn">Excluir</button>
                         </li>
                     ))}
                 </ul>

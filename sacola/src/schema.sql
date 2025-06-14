@@ -27,3 +27,14 @@ CREATE TABLE IF NOT EXISTS cliente (
     telefone VARCHAR(20),
     cpf VARCHAR(11) NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS movimentacao (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    produto_id INT NOT NULL,
+    usuario_id INT NOT NULL,
+    tipo ENUM('ENTRADA', 'SAIDA') NOT NULL,
+    quantidade INT NOT NULL,
+    data DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (produto_id) REFERENCES produto(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id)
+);

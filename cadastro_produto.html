@@ -24,6 +24,9 @@
                 <label for="product-code">Código do Produto</label>
                 <input type="text" id="product-code" required>
 
+                <label for="product-quantidade">Quantidade do Produto</label>
+                <input type="text" id="product-quantidade" required>
+
                 <label>Foto do Produto</label>
                 <input type="file" id="product-image" accept="image/*" style="display: none;">
                 <button type="button" id="upload-btn">Escolher Foto</button>
@@ -60,6 +63,7 @@
 
             const productName = document.getElementById('product-name').value;
             const productCode = document.getElementById('product-code').value;
+            const productQuantidade = document.getElementById('product-quantidade').value;
 
             const existingItems = document.querySelectorAll('.product-item');
             for (let item of existingItems) {
