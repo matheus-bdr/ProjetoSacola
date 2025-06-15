@@ -64,6 +64,8 @@ function Cliente() {
     }
 
     const handleDelete = (id) => {
+        const confirmar = window.confirm('Deseja excluir o cliente?');
+        if (!confirmar) return;
         Axios.delete(`http://localhost:3001/api/cliente/${id}`).then((response) => {
             console.log(response);
             alert('Cliente excluido com sucesso.');
@@ -98,9 +100,11 @@ function Cliente() {
         <div class="container">
             <div class="form-container">
             <div class="nav-bar">
-                    <a href="/" class="active">Cliente</a>
+                    <a href="/" className="active">Cliente</a>
                     <span>|</span>
-                    <a href="/produto">Produto</a>
+                    <a href="/produto" >Produto</a>
+                    <span>|</span>
+                    <a href="/movimentacao">Movimentação</a>
                 </div>
 
                 <h2>Cadastro de Cliente</h2>

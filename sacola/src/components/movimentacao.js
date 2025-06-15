@@ -1,116 +1,223 @@
-import React, { useState, useEffect } from 'react';
-import Axios from 'axios';
-import '../style/Movimentacao.css';
-
+import { useState, useEffect } from 'react';
+import Axios from "axios";
+import '../style/Produto.css';
 function Movimentacao() {
-    const [movimento, setMovimento] = useState({
-        tipo: '',
-        quantidade: '',
-        produto_id: '',
-    });
-
-    const [produtos, setProdutos] = useState([]);
+    const [values, setValues] = useState({ produto_id: '', cliente_id: '', tipo: '', quantidade: '', data: '', id: null });
     const [movimentacoes, setMovimentacoes] = useState([]);
+    const [produtos, setProdutos] = useState([]);
+    const [clientes, setClientes] = useState([]);
+    const [botaoText, setBotaoText] = useState("Cadastrar Movimentação");
 
-    useEffect(() => {
-        Axios.get('http://localhost:3001/api/produto')
-            .then(res => setProdutos(res.data.itens))
-            .catch(err => console.error(err));
-
-        Axios.get('http://localhost:3001/api/movimentacao')
-            .then(res => setMovimentacoes(res.data.itens))
-            .catch(err => console.error(err));
-    }, []);
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setMovimento(prev => ({ ...prev, [name]: value }));
+    const changeValues = (value) => {
+        setValues(prevValue => ({
+            ...prevValue,
+            [value.target.name]: value.target.value,
+        }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        Axios.post('http://localhost:3001/api/movimentacao', {
-            ...movimento,
-            data: new Date().toISOString().slice(0, 10)
-        })
-        .then(() => {
-            alert('Movimentação registrada!');
-            window.location.reload();
-        })
-        .catch(() => alert('Erro ao registrar movimentação.'));
+
+        if (!values.produto_id || !values.cliente_id || values.tipo === '' || values.quantidade === '' || !values.data) {
+            alert('Preencha todos os campos.');
+            return;
+        }
+
+        if (!values.id) {
+            try {
+                await Axios.post("http://localhost:3001/api/movimentacao", {
+                    produto_id: parseInt(values.produto_id),
+                    cliente_id: parseInt(values.cliente_id),
+                    tipo: values.tipo,
+                    quantidade: parseInt(values.quantidade),
+                    data: values.data
+                });
+
+                window.location.reload();
+            } catch (error) {
+                console.error('Erro no cadastro da movimentação:', error);
+                alert('Erro ao cadastrar movimentação.');
+            }
+        } else {
+            try {
+                await Axios.patch(`http://localhost:3001/api/movimentacao/${values.id}`, {
+                    quantidade: parseInt(values.quantidade)
+                });
+
+                window.location.reload();
+            } catch (error) {
+                console.error('Houve um erro ao atualizar a movimentação', error);
+                alert('Erro ao atualizar movimentação.');
+            }
+        }
     };
 
     const handleDelete = (id) => {
-        if (window.confirm('Deseja realmente excluir essa movimentação?')) {
-            Axios.delete(`http://localhost:3001/api/movimentacao/${id}`)
-                .then(() => {
-                    alert('Movimentação excluída');
-                    window.location.reload();
-                })
-                .catch(() => alert('Erro ao excluir.'));
-        }
+        const confirmar = window.confirm('Deseja excluir o produto?');
+        if (!confirmar) return;
+        Axios.delete(`http://localhost:3001/api/movimentacao/${id}`).then(() => {
+            alert('Movimentação excluída com sucesso.');
+            window.location.reload();
+        }).catch((error) => {
+            console.error('Erro ao excluir a movimentação:', error);
+            alert('Erro ao excluir a movimentação.');
+        });
     };
+
+    const handleEdit = (id) => {
+        const movimentacaoSelecionada = movimentacoes.find(obj => obj.id === id);
+
+        setValues({
+            produto_id: movimentacaoSelecionada.produto_id,
+            cliente_id: movimentacaoSelecionada.cliente_id,
+            tipo: movimentacaoSelecionada.tipo,
+            quantidade: movimentacaoSelecionada.quantidade,
+            data: movimentacaoSelecionada.data.split('T')[0],
+            id: movimentacaoSelecionada.id
+        });
+
+        setBotaoText("Editar Movimentação");
+    };
+
+    useEffect(() => {
+        // Movimentações
+        Axios.get('http://localhost:3001/api/movimentacao')
+            .then(response => {
+                setMovimentacoes(response.data.itens);
+            })
+            .catch(error => {
+                console.error('Erro ao buscar movimentações:', error);
+                alert('API não está disponível');
+            });
+
+        // Produtos
+        Axios.get('http://localhost:3001/api/produto')
+            .then(response => {
+                setProdutos(response.data.itens);
+            })
+            .catch(error => {
+                console.error('Erro ao buscar produtos:', error);
+                alert('Erro ao buscar produtos');
+            });
+
+        // Clientes
+        Axios.get('http://localhost:3001/api/cliente')
+            .then(response => {
+                setClientes(response.data.itens);
+            })
+            .catch(error => {
+                console.error('Erro ao buscar clientes:', error);
+                alert('Erro ao buscar clientes');
+            });
+    }, []);
 
     return (
         <div className="container">
             <div className="form-container">
                 <div className="nav-bar">
-                    <a href="/">Cliente</a><span>|</span>
-                    <a href="/produto">Produto</a><span>|</span>
+                    <a href="/">Cliente</a>
+                    <span>|</span>
+                    <a href="/produto">Produto</a>
+                    <span>|</span>
                     <a href="/movimentacao" className="active">Movimentação</a>
                 </div>
 
-                <h2>Registrar Movimentação</h2>
+                <h2>Cadastro de Movimentação</h2>
                 <form onSubmit={handleSubmit}>
-                    <label>Tipo</label>
-                    <select name="tipo" onChange={handleChange} required>
-                        <option value="">Selecione</option>
-                        <option value="entrada">Entrada</option>
-                        <option value="saida">Saída</option>
-                    </select>
 
-                    <label>Produto</label>
-                    <select name="produto_id" onChange={handleChange} required>
-                        <option value="">Selecione</option>
+                    {/* Produto */}
+                    <label htmlFor="mov-produto">Produto</label>
+                    <select
+                        id="mov-produto"
+                        name="produto_id"
+                        value={values.produto_id}
+                        onChange={changeValues}
+                        required
+                    >
+                        <option value="">Selecione um Produto</option>
                         {produtos.map(prod => (
-                            <option key={prod.id} value={prod.id}>{prod.nome}</option>
+                            <option key={prod.id} value={prod.id}>
+                                {prod.nome}
+                            </option>
                         ))}
                     </select>
 
-                    <label>Quantidade</label>
-                    <input type="number" name="quantidade" onChange={handleChange} required />
-
-                    <button type="submit">Registrar</button>
-                </form>
-
-                <h3>Movimentações</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Tipo</th>
-                            <th>Produto</th>
-                            <th>Quantidade</th>
-                            <th>Data</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {movimentacoes.map(m => (
-                            <tr key={m.id}>
-                                <td>{m.id}</td>
-                                <td>{m.tipo}</td>
-                                <td>{m.produto}</td>
-                                <td>{m.quantidade}</td>
-                                <td>{m.data}</td>
-                                <td>
-                                    <button onClick={() => handleDelete(m.id)}>Excluir</button>
-                                </td>
-                            </tr>
+                    {/* Cliente */}
+                    <label htmlFor="mov-cliente">Cliente</label>
+                    <select
+                        id="mov-cliente"
+                        name="cliente_id"
+                        value={values.cliente_id}
+                        onChange={changeValues}
+                        required
+                    >
+                        <option value="">Selecione um Cliente</option>
+                        {clientes.map(cli => (
+                            <option key={cli.id} value={cli.id}>
+                                {cli.nome}
+                            </option>
                         ))}
-                    </tbody>
-                </table>
+                    </select>
+
+                    {/* Tipo */}
+                    <label htmlFor="mov-tipo">Tipo</label>
+                    <select
+                        id="mov-tipo"
+                        name="tipo"
+                        value={values.tipo}
+                        onChange={changeValues}
+                        required
+                    >
+                        <option value="">Selecione</option>
+                        <option value="ENTRADA">Entrada</option>
+                        <option value="SAIDA">Venda</option>
+                    </select>
+
+                    {/* Quantidade */}
+                    <label htmlFor="mov-quantidade">Quantidade</label>
+                    <input
+                        type="number"
+                        id="mov-quantidade"
+                        name="quantidade"
+                        min="1"
+                        value={values.quantidade}
+                        onChange={changeValues}
+                        required
+                    />
+
+                    {/* Data */}
+                    <label htmlFor="mov-data">Data</label>
+                    <input
+                        type="date"
+                        id="mov-data"
+                        name="data"
+                        value={values.data}
+                        onChange={changeValues}
+                        required
+                    />
+
+                    <button type="submit">{botaoText}</button>
+                </form>
             </div>
+
+            <div className="product-list-container">
+                <h2>Lista de Movimentações</h2>
+                <ul id="product-list" className="product-list">
+                    {movimentacoes.map(item => (
+                    <li key={item.id} className="product-item">
+                        <div className="product-info">
+                            <strong>ID Movimentação:</strong> {item.id}<br />
+                            <strong>Produto:</strong> {produtos.find(p => p.id === item.produto_id)?.nome || item.produto_id}<br />
+                            <strong>Cliente:</strong> {clientes.find(c => c.id === item.cliente_id)?.nome || item.cliente_id}<br />
+                            <strong>Tipo:</strong> {item.tipo === 'ENTRADA' ? 'Entrada' : 'Venda'}<br />
+                            <strong>Quantidade:</strong> {item.quantidade}<br />
+                            <strong>Data:</strong> {item.data.split('T')[0]}<br/>
+                            <strong>Valor Total em Estoque: </strong>
+                        </div>
+                        </li>))}
+                    </ul>
+            </div>
+            
         </div>
     );
 }

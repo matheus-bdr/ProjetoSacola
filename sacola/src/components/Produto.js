@@ -63,6 +63,9 @@ function Produto() {
     };
 
     const handleDelete = (id) => {
+        const confirmar = window.confirm('Deseja excluir o produto?');
+        if (!confirmar) return; // se cancelar, não faz nada
+
         Axios.delete(`http://localhost:3001/api/produto/${id}`).then(() => {
             alert('Produto excluído com sucesso.');
             window.location.reload();
@@ -109,6 +112,8 @@ function Produto() {
                     <a href="/">Cliente</a>
                     <span>|</span>
                     <a href="/produto" className="active">Produto</a>
+                    <span>|</span>
+                    <a href="/movimentacao">Movimentação</a>
                 </div>
 
                 <h2>Cadastro de Produto</h2>
