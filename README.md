@@ -28,6 +28,7 @@ Antes de iniciar, certifique-se de ter as seguintes ferramentas instaladas em su
 
 - [Node.js](https://nodejs.org/)
 - [npm](https://www.npmjs.com/)
+- [Docker](https://www.docker.com/)
 
 Além disso, um editor de código como o [VS Code](https://code.visualstudio.com/) é recomendado.
 
@@ -35,12 +36,13 @@ Além disso, um editor de código como o [VS Code](https://code.visualstudio.com
 
 ### Banco de Dados
 
-1. Caso não tenha o banco instalado local, você pode criar um container docker executando o comando abaixo para iniciar o banco de dados:
+1. Caso não tenha o banco instalado local, você pode criar um container docker executando o comando abaixo para iniciar o banco de dados, é importante ressaltar que o Docker tem que estar aberto e o comando deve ser rodado em uma pasta geral:
 ```bash
 docker run --rm -d --name mariadb -p 3306:3306 --env MARIADB_ROOT_PASSWORD=password mariadb:latest
 ```
+2. Caso esteja dando problema, você pode recorrer a 2 soluções, parar manualmente o MySQL apertando Windows + R, digitando "services.msc", parando o MySQL e rodar o código acima novamente. Se mesmo assim não estiver funcionando, rode o pare o Container no Docker, rode o código acima novamente.
 
-2. Importe o arquivo de schema para criar as tabelas:
+3. Importe o arquivo de schema para criar as tabelas ou abra o Dbeaver, conecte no banco com as credenciais e rode o script SQL (ProjetoSacola\sacola\src\schema.sql):
 
 ```bash
 mysql -u root -p -h 0.0.0.0 < src/schema.sql
