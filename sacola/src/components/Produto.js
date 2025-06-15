@@ -163,7 +163,7 @@ function Produto() {
             </div>
 
             <div className="product-list-container">
-                <h3>Produtos Cadastrados</h3>
+                <h3>Produtos em Estoque</h3>
                 <ul id="product-list" className="product-list">
                     {produtos.map(item => (
                         <li key={item.id} className="product-item">

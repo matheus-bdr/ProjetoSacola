@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Axios from "axios";
 import '../style/Produto.css';
+
 function Movimentacao() {
     const [values, setValues] = useState({ produto_id: '', cliente_id: '', tipo: '', quantidade: '', data: '', id: null });
     const [movimentacoes, setMovimentacoes] = useState([]);
@@ -110,7 +111,21 @@ function Movimentacao() {
                 alert('Erro ao buscar clientes');
             });
     }, []);
+    const totalEstoque = produtos.reduce((acc, produto) => acc + produto.quantidade_disponivel, 0);
+    const totalVendido = movimentacoes.filter(mov => mov.tipo === 'SAIDA').reduce((acc, mov) => acc + mov.quantidade, 0);
+    const valorEstoque = produtos.reduce((acc, produto) => acc + (produto.preco * produto.quantidade_disponivel), 0);
 
+    const valorVendido = movimentacoes
+        .filter(item => item.tipo === 'SAIDA')
+        .reduce((acc, item) => {
+            const produto = produtos.find(p => p.id === item.produto_id);
+            const preco = produto ? produto.preco : 0;
+            return acc + (item.quantidade * preco);
+        }, 0);
+
+    const vendaXEstoque = valorEstoque-valorVendido;
+    const vendaXEstoque_percentual = ((valorVendido/valorEstoque)*100).toFixed(2);;
+    const EstoqueXVenda_percentual = 100-vendaXEstoque_percentual;
     return (
         <div className="container">
             <div className="form-container">
@@ -201,6 +216,63 @@ function Movimentacao() {
             </div>
 
             <div className="product-list-container">
+                
+               <div>
+  <h2>Visão Geral do Estoque</h2>
+
+  <div className="cards-container">
+    <div className="card">
+      <div className="card-body">
+        <h5 className="card-title">Qtd. em Estoque</h5>
+        <p className="card-text">{totalEstoque}</p>
+      </div>
+    </div>
+
+    <div className="card">
+      <div className="card-body">
+        <h5 className="card-title">Qtd. Vendida</h5>
+        <p className="card-text">{totalVendido}</p>
+      </div>
+    </div>
+
+    <div className="card">
+      <div className="card-body">
+        <h5 className="card-title">Valor em Estoque</h5>
+        <p className="card-text">R$ {valorEstoque}</p>
+      </div>
+    </div>
+
+    <div className="card">
+      <div className="card-body">
+        <h5 className="card-title">Valor Vendido</h5>
+        <p className="card-text">R$ {valorVendido}</p>
+      </div>
+    </div>
+
+    <div className="card">
+      <div className="card-body">
+        <h5 className="card-title">Venda x Estoque</h5>
+        <p className="card-text">R$ {vendaXEstoque}</p>
+      </div>
+    </div>
+
+    <div className="card">
+      <div className="card-body">
+        <h5 className="card-title">Estoque Vendido (%)</h5>
+        <p className="card-text">{vendaXEstoque_percentual}%</p>
+      </div>
+    </div>
+
+    <div className="card">
+      <div className="card-body">
+        <h5 className="card-title">Estoque Parado (%)</h5>
+        <p className="card-text">{EstoqueXVenda_percentual}%</p>
+      </div>
+    </div>
+  </div>
+</div>
+<br />
+
                 <h2>Lista de Movimentações</h2>
                 <ul id="product-list" className="product-list">
                     {movimentacoes.map(item => (
@@ -211,8 +283,9 @@ function Movimentacao() {
                             <strong>Cliente:</strong> {clientes.find(c => c.id === item.cliente_id)?.nome || item.cliente_id}<br />
                             <strong>Tipo:</strong> {item.tipo === 'ENTRADA' ? 'Entrada' : 'Venda'}<br />
                             <strong>Quantidade:</strong> {item.quantidade}<br />
+                            <strong>Quantidade em Estoque Atual:</strong> {produtos.find(p => p.id === item.produto_id)?.quantidade_disponivel || 0}<br />
                             <strong>Data:</strong> {item.data.split('T')[0]}<br/>
-                            <strong>Valor Total em Estoque: </strong>
+                            
                         </div>
                         </li>))}
                     </ul>
