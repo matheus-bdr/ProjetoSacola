@@ -1,6 +1,6 @@
 # SACOLA
 
-Projeto de extensão desenvolvido para a disciplina de **Programação WEB**.
+Projeto de extensão desenvolvido para a disciplina de **SOLUÇÕES COMPUTACIONAIS**.
 
 ## Índice
 
